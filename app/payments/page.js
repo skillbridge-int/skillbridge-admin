@@ -2,10 +2,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import Shell, { Msg } from '../../components/Shell';
 import { supabase, money, today } from '../../lib/supabase';
+import { useClassLabels } from '../../lib/labels';
 
 const ROLES = ['admin', 'accountant'];
 
 function Inner() {
+  const L = useClassLabels();
   const [pays, setPays] = useState([]);
   const [fin, setFin] = useState([]);
   const [names, setNames] = useState({});
@@ -47,7 +49,7 @@ function Inner() {
           <label>Student · class
             <select required value={f.key} onChange={(e) => setF({ ...f, key: e.target.value })}>
               <option value="">—</option>
-              {fin.filter((x) => Number(x.net_fee) > 0).map((x) => <option key={x.student_id + x.class_id} value={x.student_id + '|' + x.class_id}>{x.student_id} {names[x.student_id]} · {x.class_id}</option>)}
+              {fin.filter((x) => Number(x.net_fee) > 0).map((x) => <option key={x.student_id + x.class_id} value={x.student_id + '|' + x.class_id}>{x.student_id} {names[x.student_id]} · {L(x.class_id)}</option>)}
             </select></label>
           <label>Amount (LYD)<input type="number" step="0.01" min="0.01" required value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></label>
           <label>Date<input type="date" value={f.paid_on} onChange={(e) => setF({ ...f, paid_on: e.target.value })} /></label>
@@ -64,7 +66,7 @@ function Inner() {
         <div className="scroll"><table>
           <thead><tr><th>Date</th><th>Student</th><th>Class</th><th className="right">Amount</th><th>Method</th><th>Receipt</th><th>Notes</th></tr></thead>
           <tbody>{pays.map((p) => (
-            <tr key={p.id}><td>{p.paid_on || '—'}</td><td>{names[p.student_id]}</td><td>{p.class_id}</td>
+            <tr key={p.id}><td>{p.paid_on || '—'}</td><td>{names[p.student_id]}</td><td>{L(p.class_id)}</td>
               <td className="right">{money(p.amount)}</td><td>{p.method}</td><td>{p.receipt_no}</td><td>{p.notes}</td></tr>))}</tbody>
         </table></div></div>
     </>

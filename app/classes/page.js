@@ -2,10 +2,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import Shell, { Msg, useAuth } from '../../components/Shell';
 import { supabase, money } from '../../lib/supabase';
+import { useClassLabels } from '../../lib/labels';
 
 const ROLES = ['admin', 'accountant', 'coordinator'];
 
 function Inner() {
+  const L = useClassLabels();
   const { role } = useAuth();
   const canEdit = role === 'admin' || role === 'coordinator';
   const [rows, setRows] = useState([]);
@@ -35,7 +37,7 @@ function Inner() {
         <thead><tr><th>Class</th><th>Teacher</th><th>Held</th><th>Remaining</th><th>Students</th>{role !== 'coordinator' && <th className="right">Price / session</th>}<th>Progress</th><th>Status</th></tr></thead>
         <tbody>{rows.map((c) => (
           <tr key={c.class_id}>
-            <td>{c.class_id}</td><td>{teachers[c.teacher_id]}</td><td>{c.held}/{c.total}</td><td>{c.remaining}</td><td>{c.enrolled}</td>
+            <td>{L(c.class_id)}<div className="muted" style={{ fontSize: 11 }}>{c.class_id}</div></td><td>{teachers[c.teacher_id]}</td><td>{c.held}/{c.total}</td><td>{c.remaining}</td><td>{c.enrolled}</td>
             {role !== 'coordinator' && <td className="right">{money(c.price_per_session)}</td>}
             <td><span className="bar"><i style={{ width: `${c.progress_pct}%` }} /></span> {c.progress_pct}%</td>
             <td>{canEdit

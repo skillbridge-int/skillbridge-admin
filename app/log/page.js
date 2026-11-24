@@ -2,11 +2,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import Shell, { Msg } from '../../components/Shell';
 import { supabase, today } from '../../lib/supabase';
+import { useClassLabels } from '../../lib/labels';
 
 const ROLES = ['admin', 'coordinator', 'teacher'];
 const STATUS = [['held', 'Held'], ['cancelled_by_student', 'Cancelled by student'], ['cancelled_by_teacher', 'Cancelled by teacher'], ['postponed', 'Postponed']];
 
 function Inner() {
+  const L = useClassLabels();
   const [classes, setClasses] = useState([]);
   const [courses, setCourses] = useState({});
   const [cid, setCid] = useState('');
@@ -76,7 +78,7 @@ function Inner() {
             <label>Class
               <select required value={cid} onChange={(e) => setCid(e.target.value)}>
                 <option value="">Choose a class…</option>
-                {classes.map((c) => <option key={c.id} value={c.id}>{c.id}</option>)}
+                {classes.map((c) => <option key={c.id} value={c.id}>{L(c.id)}</option>)}
               </select></label>
             <label>Lesson date<input type="date" required max={today()} value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></label>
             <label>Session number{total ? ` (of ${total})` : ''}<input type="number" min="1" required value={f.no} onChange={(e) => setF({ ...f, no: e.target.value })} /></label>

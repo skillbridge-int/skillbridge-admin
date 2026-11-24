@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Shell, { Kpi, useAuth } from '../../components/Shell';
 import { supabase, money, today } from '../../lib/supabase';
+import { useClassLabels } from '../../lib/labels';
 
 const ROLES = ['teacher'];
 
 function Inner() {
   const { name } = useAuth();
+  const L = useClassLabels();
   const [classes, setClasses] = useState([]);
   const [rosters, setRosters] = useState({});
   const [sessions, setSessions] = useState([]);
@@ -53,8 +55,8 @@ function Inner() {
           const h = held(c.id), tot = c.course?.total_sessions || 12, pct = Math.round(100 * Math.min(h, tot) / tot);
           return (
             <div className="card classcard" key={c.id}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><h3>{c.id}</h3><span className={`pill ${c.status}`}>{c.status}</span></div>
-              <div className="muted">{c.course?.name}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><h3>{L(c.id)}</h3><span className={`pill ${c.status}`}>{c.status}</span></div>
+              <div className="muted">{c.id}</div>
               <div><span className="bar" style={{ width: 180 }}><i style={{ width: `${pct}%` }} /></span> {h}/{tot} sessions · {pct}%</div>
               {c.status === 'active' && <div className="chips">{(rosters[c.id] || []).map((r) => <span key={r.student_id} className="chip">{r.name}</span>)}</div>}
             </div>
@@ -66,7 +68,7 @@ function Inner() {
         <div className="scroll"><table>
           <thead><tr><th>Month</th><th>Class</th><th>Sessions held</th><th>Paying students</th><th className="right">My fee (LYD)</th></tr></thead>
           <tbody>{earn.length === 0 && <tr><td colSpan="5" className="muted">No earnings yet.</td></tr>}
-            {earn.map((x, i) => <tr key={i}><td>{String(x.month).slice(0, 7)}</td><td>{x.class_id}</td><td>{x.sessions_held}</td><td>{x.students}</td><td className="right"><b>{money(x.teacher_due)}</b></td></tr>)}</tbody>
+            {earn.map((x, i) => <tr key={i}><td>{String(x.month).slice(0, 7)}</td><td>{L(x.class_id)}</td><td>{x.sessions_held}</td><td>{x.students}</td><td className="right"><b>{money(x.teacher_due)}</b></td></tr>)}</tbody>
         </table></div>
         <p className="muted" style={{ marginBottom: 0 }}>Fees are calculated from the sessions you held in your own classes.</p>
       </div>

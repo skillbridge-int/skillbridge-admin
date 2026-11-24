@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import Shell, { useAuth } from '../../components/Shell';
 import { supabase } from '../../lib/supabase';
+import { useClassLabels } from '../../lib/labels';
 
 const ROLES = ['admin', 'coordinator', 'teacher'];
 
 function Inner() {
+  const L = useClassLabels();
   const { role } = useAuth();
   const [rows, setRows] = useState([]);
   const [cls, setCls] = useState('');
@@ -32,14 +34,14 @@ function Inner() {
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <h2 style={{ margin: 0 }}>{role === 'teacher' ? 'My sessions' : 'All sessions'} · {held.length} held of {shown.length}</h2>
         <select value={cls} onChange={(e) => setCls(e.target.value)}>
-          <option value="">All classes</option>{classes.map((c) => <option key={c}>{c}</option>)}
+          <option value="">All classes</option>{classes.map((c) => <option key={c} value={c}>{L(c)}</option>)}
         </select>
       </div>
       <div className="scroll"><table>
         <thead><tr><th>Date</th><th>Class</th><th>No.</th><th>Status</th><th>Type</th><th>Min</th><th>Attendance</th><th>Topic</th></tr></thead>
         <tbody>{shown.map((r) => (
           <tr key={r.id} onClick={() => setOpen(open === r.id ? null : r.id)} style={{ cursor: 'pointer' }}>
-            <td>{r.session_date}</td><td>{r.class_id}</td><td>{r.session_no}</td>
+            <td>{r.session_date}</td><td>{L(r.class_id)}</td><td>{r.session_no}</td>
             <td><span className={`pill ${r.status}`}>{r.status.replaceAll('_', ' ')}</span></td>
             <td>{r.kind}</td><td>{r.duration_min || ''}</td>
             <td>{r.att ? `${r.att.present} present · ${r.att.absent} absent${r.att.excused ? ` · ${r.att.excused} excused` : ''}` : ''}</td>

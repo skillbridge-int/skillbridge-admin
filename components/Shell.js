@@ -77,7 +77,7 @@ export default function Shell({ title, subtitle, roles, children }) {
       <div className="layout">
         <aside className="side">
           <div className="brand">
-            <img src={`${BASE}/logo.png`} alt="SkillBridge International" className="logo" />
+            <img src={`${BASE}/logo-mark.png`} alt="SkillBridge International" className="logo" />
             <div><b>SkillBridge</b><small>International</small></div>
           </div>
           <nav>

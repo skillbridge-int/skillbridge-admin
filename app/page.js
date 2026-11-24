@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import Shell, { Kpi, useAuth } from '../components/Shell';
 import { BarChart, Donut } from '../components/Charts';
 import { supabase, money } from '../lib/supabase';
+import { useClassLabels } from '../lib/labels';
 
 const ROLES = ['admin', 'accountant'];
 
 function Inner() {
+  const L = useClassLabels();
   const [d, setD] = useState(null);
   const [classes, setClasses] = useState([]);
   const [owing, setOwing] = useState([]);
@@ -76,7 +78,7 @@ function Inner() {
             <thead><tr><th>Class</th><th>Status</th><th>Held</th><th>Students</th><th>Progress</th></tr></thead>
             <tbody>{classes.map((c) => (
               <tr key={c.class_id}>
-                <td>{c.class_id}</td><td><span className={`pill ${c.status}`}>{c.status}</span></td>
+                <td>{L(c.class_id)}</td><td><span className={`pill ${c.status}`}>{c.status}</span></td>
                 <td>{c.held}/{c.total}</td><td>{c.enrolled}</td>
                 <td><span className="bar"><i style={{ width: `${c.progress_pct}%` }} /></span> {c.progress_pct}%</td>
               </tr>))}</tbody>
@@ -88,7 +90,7 @@ function Inner() {
             <thead><tr><th>Student</th><th>Class</th><th className="right">Balance</th></tr></thead>
             <tbody>{owing.length === 0 && <tr><td colSpan="3" className="muted">Nothing outstanding.</td></tr>}
               {owing.map((r) => (
-                <tr key={r.student_id + r.class_id}><td>{r.name}</td><td>{r.class_id}</td><td className="right">{money(r.balance)}</td></tr>))}</tbody>
+                <tr key={r.student_id + r.class_id}><td>{r.name}</td><td>{L(r.class_id)}</td><td className="right">{money(r.balance)}</td></tr>))}</tbody>
           </table></div>
         </div>
       </div>
@@ -98,7 +100,7 @@ function Inner() {
           <div className="scroll"><table>
             <thead><tr><th>Class</th><th>No.</th><th>Date</th><th>Issue</th></tr></thead>
             <tbody>{issues.map((i, n) => (
-              <tr key={n}><td>{i.class_id}</td><td>{i.session_no}</td><td>{i.session_date}</td><td>{i.issue}</td></tr>))}</tbody>
+              <tr key={n}><td>{L(i.class_id)}</td><td>{i.session_no}</td><td>{i.session_date}</td><td>{i.issue}</td></tr>))}</tbody>
           </table></div>
         </div>
       )}

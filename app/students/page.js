@@ -19,14 +19,17 @@ function Inner() {
   const [en, setEn] = useState({ student_id: '', class_id: '', discount: 0 });
 
   const load = useCallback(async () => {
-    const [s, e, fin, att, c] = await Promise.all([
+    const [s, e, fin, att, c, crs] = await Promise.all([
       supabase.from('students').select('*').order('id'),
       supabase.from('enrollments').select('student_id,class_id,discount_pct,status'),
       showMoney ? supabase.from('v_enrollment_finance').select('*') : Promise.resolve({ data: [] }),
       supabase.from('v_student_attendance').select('*'),
-      supabase.from('classes').select('id,name,status').order('id'),
+      supabase.from('classes').select('id,name,status,course_id').order('id'),
+      supabase.from('courses').select('id,level'),
     ]);
     setStudents(s.data || []); setClasses(c.data || []);
+    const lvl = Object.fromEntries((crs.data || []).map((x) => [x.id, x.level]));
+    const cname = Object.fromEntries((c.data || []).map((x) => [x.id, x.name + (lvl[x.course_id] ? ' · ' + lvl[x.course_id] : '')]));
     const key = (x) => x.student_id + '|' + x.class_id;
     const finM = Object.fromEntries((fin.data || []).map((x) => [key(x), x]));
     const attM = Object.fromEntries((att.data || []).map((x) => [key(x), x]));
@@ -34,7 +37,7 @@ function Inner() {
     for (const st of s.data || []) {
       const ens = (e.data || []).filter((x) => x.student_id === st.id);
       if (ens.length === 0) out.push({ ...st, class_id: '—' });
-      for (const x of ens) out.push({ ...st, class_id: x.class_id, enr: x.status, discount: x.discount_pct, fin: finM[key(x)], att: attM[key(x)] });
+      for (const x of ens) out.push({ ...st, class_id: x.class_id, class_label: cname[x.class_id] || x.class_id, enr: x.status, discount: x.discount_pct, fin: finM[key(x)], att: attM[key(x)] });
     }
     setRows(out);
   }, [showMoney]);
@@ -67,7 +70,7 @@ function Inner() {
   };
 
   const shown = rows.filter((r) => (tab === 'all' || (tab === 'active' ? r.status === 'active' : r.status !== 'active'))
-    && (r.id + r.name + r.class_id).toLowerCase().includes(q.toLowerCase()));
+    && (r.id + r.name + r.class_id + (r.class_label || '')).toLowerCase().includes(q.toLowerCase()));
   const nActive = new Set(rows.filter((r) => r.status === 'active').map((r) => r.id)).size;
   const nDone = new Set(rows.filter((r) => r.status !== 'active').map((r) => r.id)).size;
   const openClasses = classes.filter((c) => c.status === 'active');
@@ -124,7 +127,7 @@ function Inner() {
             <th>Attendance</th></tr></thead>
           <tbody>{shown.map((r, i) => (
             <tr key={r.id + r.class_id + i}>
-              <td>{r.id}</td><td>{r.name}</td><td><span className={`pill ${r.status}`}>{r.status}</span></td><td>{r.class_id}</td>
+              <td>{r.id}</td><td>{r.name}</td><td><span className={`pill ${r.status}`}>{r.status}</span></td><td>{r.class_label ? <>{r.class_label}<div className="muted" style={{ fontSize: 11 }}>{r.class_id}</div></> : r.class_id}</td>
               <td>{r.enr && <span className={`pill ${r.enr}`}>{r.enr}</span>}</td>
               {showMoney && <>
                 <td className="right">{r.fin ? money(r.fin.net_fee) : '—'}</td>

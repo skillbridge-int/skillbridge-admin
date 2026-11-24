@@ -2,10 +2,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import Shell, { Msg } from '../../components/Shell';
 import { supabase, money, today } from '../../lib/supabase';
+import { useClassLabels } from '../../lib/labels';
 
 const ROLES = ['admin', 'accountant'];
 
 function Inner() {
+  const L = useClassLabels();
   const [bal, setBal] = useState([]);
   const [due, setDue] = useState([]);
   const [payouts, setPayouts] = useState([]);
@@ -61,7 +63,7 @@ function Inner() {
         <div className="scroll"><table>
           <thead><tr><th>Month</th><th>Teacher</th><th>Class</th><th>Sessions</th><th>Paying students</th><th className="right">Revenue</th><th>Share</th><th className="right">Teacher</th><th className="right">SkillBridge</th></tr></thead>
           <tbody>{due.map((r, i) => (
-            <tr key={i}><td>{String(r.month).slice(0, 7)}</td><td>{r.teacher_name}</td><td>{r.class_id}</td><td>{r.sessions_held}</td><td>{r.students}</td>
+            <tr key={i}><td>{String(r.month).slice(0, 7)}</td><td>{r.teacher_name}</td><td>{L(r.class_id)}</td><td>{r.sessions_held}</td><td>{r.students}</td>
               <td className="right">{money(r.gross)}</td><td>{r.teacher_share_pct}%</td><td className="right"><b>{money(r.teacher_due)}</b></td><td className="right">{money(r.skillbridge_share)}</td></tr>))}</tbody>
         </table></div></div>
       {payouts.length > 0 && (
