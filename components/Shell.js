@@ -18,6 +18,8 @@ const ICONS = {
   log: 'M12 5v14M5 12h14',
   sessions: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   home: 'M3 11l9-8 9 8M5 10v10h14V10',
+  posts: 'M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12',
+  family: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 12a2.5 2.5 0 1 0 0-5M3 20v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1M17 14a4 4 0 0 1 4 4v2',
 };
 export const Icon = ({ name, size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -26,11 +28,11 @@ export const Icon = ({ name, size = 20 }) => (
 );
 
 const NAV = {
-  admin: [['/', 'Dashboard', 'dashboard'], ['/students', 'Students', 'students'], ['/classes', 'Classes', 'classes'], ['/sessions', 'Sessions', 'sessions'], ['/log', 'Log a session', 'log'], ['/payments', 'Payments', 'payments'], ['/teachers', 'Teacher pay', 'teachers'], ['/settings', 'Settings', 'settings']],
+  admin: [['/', 'Dashboard', 'dashboard'], ['/students', 'Students', 'students'], ['/classes', 'Classes', 'classes'], ['/sessions', 'Sessions', 'sessions'], ['/log', 'Log a session', 'log'], ['/posts', 'Tasks & news', 'posts'], ['/families', 'Family access', 'family'], ['/payments', 'Payments', 'payments'], ['/teachers', 'Teacher pay', 'teachers'], ['/settings', 'Settings', 'settings']],
   accountant: [['/', 'Dashboard', 'dashboard'], ['/students', 'Students', 'students'], ['/payments', 'Payments', 'payments'], ['/teachers', 'Teacher pay', 'teachers']],
-  coordinator: [['/students', 'Students', 'students'], ['/classes', 'Classes', 'classes'], ['/sessions', 'Sessions', 'sessions'], ['/log', 'Log a session', 'log']],
-  teacher: [['/teacher', 'My overview', 'home'], ['/log', 'Log a session', 'log'], ['/sessions', 'My sessions', 'sessions']],
-  parent: [['/parent', 'My children', 'home']],
+  coordinator: [['/students', 'Students', 'students'], ['/classes', 'Classes', 'classes'], ['/sessions', 'Sessions', 'sessions'], ['/log', 'Log a session', 'log'], ['/posts', 'Tasks & news', 'posts'], ['/families', 'Family access', 'family']],
+  teacher: [['/teacher', 'My overview', 'home'], ['/log', 'Log a session', 'log'], ['/posts', 'Tasks & news', 'posts'], ['/sessions', 'My sessions', 'sessions']],
+  parent: [['/parent', 'My learning', 'home']],
 };
 const HOME = { admin: '/', accountant: '/', coordinator: '/students', teacher: '/teacher', parent: '/parent' };
 
@@ -47,7 +49,7 @@ export default function Shell({ title, subtitle, roles, children }) {
       const u = data.session.user;
       const { data: prof } = await supabase.from('profiles').select('role,full_name,teacher_id').eq('id', u.id).maybeSingle();
       if (!prof) return setState('denied');
-      const a = { role: prof.role, name: prof.full_name || u.email, teacherId: prof.teacher_id, email: u.email };
+      const a = { id: u.id, role: prof.role, name: prof.full_name || u.email, teacherId: prof.teacher_id, email: u.email };
       setAuth(a);
       if (roles && !roles.includes(a.role)) return router.replace(HOME[a.role] || '/');
       setState('ok');
@@ -58,16 +60,7 @@ export default function Shell({ title, subtitle, roles, children }) {
   const out = async () => { await supabase.auth.signOut(); router.replace('/login/'); };
 
   if (state === 'checking') return <div className="center muted"><div className="spinner" /></div>;
-  if (state === 'denied')
-    return (
-      <div className="center">
-        <div className="card narrow">
-          <h2>No access yet</h2>
-          <p className="muted">Your login exists but has no role. Ask the administrator to give you a role in Settings.</p>
-          <button onClick={out}>Sign out</button>
-        </div>
-      </div>
-    );
+  if (state === 'denied') return <ClaimCode onSignOut={out} />;
 
   const nav = NAV[auth.role] || [];
   const isActive = (href) => (href === '/' ? path === '/' : path.startsWith(href));
@@ -115,6 +108,33 @@ export function Kpi({ label, value, tone = '', icon, hint }) {
       <small>{label}</small>
       <b>{value}</b>
       {hint && <em>{hint}</em>}
+    </div>
+  );
+}
+
+function ClaimCode({ onSignOut }) {
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const go = async (e) => {
+    e.preventDefault(); setBusy(true); setMsg(null);
+    const { data, error } = await supabase.rpc('claim_invite', { p_code: code, p_name: name });
+    setBusy(false);
+    if (error) return setMsg({ type: 'err', text: error.message });
+    setMsg({ type: 'ok', text: `Linked to ${data}. Opening…` });
+    setTimeout(() => { window.location.href = `${BASE}/parent/`; }, 700);
+  };
+  return (
+    <div className="center">
+      <form className="card narrow" onSubmit={go}>
+        <h2>Welcome</h2>
+        <p className="muted">Enter the invite code you received from SkillBridge to see your classes and tasks. Staff: ask the administrator to give you a role.</p>
+        <Msg msg={msg} />
+        <label>Your name<input value={name} onChange={(e) => setName(e.target.value)} /></label>
+        <label style={{ marginTop: 10 }}>Invite code<input required value={code} onChange={(e) => setCode(e.target.value)} placeholder="XXXX-XXXX" /></label>
+        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}><button disabled={busy}>Continue</button><button type="button" className="ghost" onClick={onSignOut}>Sign out</button></div>
+      </form>
     </div>
   );
 }

@@ -113,3 +113,7 @@ button.danger{background:var(--bad);box-shadow:none}
   .main{padding:16px 14px 40px}
   .two{grid-template-columns:1fr}
 }
+.thread{margin-top:8px;display:grid;gap:8px}
+.cmt{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:14px}
+.cmt b{font-size:13px}
+.codebox{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;letter-spacing:.08em;background:var(--bg);border:1px dashed var(--line);border-radius:8px;padding:3px 9px}

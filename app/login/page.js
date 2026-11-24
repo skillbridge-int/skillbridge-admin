@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase, BASE } from '../../lib/supabase';
 
@@ -32,6 +33,7 @@ export default function Login() {
         <label>Email<input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></label>
         <label style={{ marginTop: 12 }}>Password<input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></label>
         <button style={{ marginTop: 18, width: '100%' }} disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+        <p className="muted" style={{ textAlign: 'center', marginTop: 14 }}>Student or parent with an invite code? <Link href="/register/">Create your account</Link></p>
       </form>
     </div>
   );
