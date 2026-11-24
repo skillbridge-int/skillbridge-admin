@@ -1,7 +1,12 @@
 import './globals.css';
 
-export const metadata = { title: 'SkillBridge Admin', description: 'SkillBridge International management' };
-export const viewport = { width: 'device-width', initialScale: 1 };
+const BASE = process.env.NEXT_PUBLIC_BASE || '';
+export const metadata = {
+  title: 'SkillBridge International',
+  description: 'SkillBridge International management system',
+  icons: { icon: `${BASE}/favicon.png`, apple: `${BASE}/logo.png` },
+};
+export const viewport = { width: 'device-width', initialScale: 1, themeColor: '#0b3367' };
 
 export default function RootLayout({ children }) {
   return (

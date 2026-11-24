@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../lib/supabase';
+import { supabase, BASE } from '../../lib/supabase';
+
+const HOME = { admin: '/', accountant: '/', coordinator: '/students', teacher: '/teacher', parent: '/parent' };
 
 export default function Login() {
   const router = useRouter();
@@ -13,20 +15,23 @@ export default function Login() {
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true); setErr('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { setBusy(false); return setErr('Wrong email or password.'); }
+    const { data: prof } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
     setBusy(false);
-    if (error) return setErr('Wrong email or password.');
-    router.replace('/');
+    router.replace(HOME[prof?.role] || '/');
   };
 
   return (
-    <div className="center">
-      <form className="card narrow" onSubmit={submit}>
-        <div className="brand" style={{ marginBottom: 16 }}><span className="logo">SB</span><div><b>SkillBridge International</b><small>Admin sign in</small></div></div>
+    <div className="loginbg">
+      <form className="logincard" onSubmit={submit}>
+        <img className="logobig" src={`${BASE}/logo.png`} alt="SkillBridge International" />
+        <h1>SkillBridge International</h1>
+        <p className="muted">Sign in to continue</p>
         {err && <div className="msg err">{err}</div>}
         <label>Email<input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></label>
-        <label style={{ marginTop: 10 }}>Password<input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></label>
-        <button style={{ marginTop: 14, width: '100%' }} disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+        <label style={{ marginTop: 12 }}>Password<input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></label>
+        <button style={{ marginTop: 18, width: '100%' }} disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>
     </div>
   );

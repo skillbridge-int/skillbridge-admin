@@ -1,15 +1,16 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import Shell, { Msg } from '../../components/Shell';
-import { supabase, money } from '../../lib/supabase';
+import { supabase, money, today } from '../../lib/supabase';
 
-export default function Payments() {
+const ROLES = ['admin', 'accountant'];
+
+function Inner() {
   const [pays, setPays] = useState([]);
   const [fin, setFin] = useState([]);
   const [names, setNames] = useState({});
   const [msg, setMsg] = useState(null);
-  const today = new Date().toISOString().slice(0, 10);
-  const [f, setF] = useState({ key: '', amount: '', paid_on: today, method: 'cash', receipt_no: '', notes: '' });
+  const [f, setF] = useState({ key: '', amount: '', paid_on: today(), method: 'cash', receipt_no: '', notes: '' });
 
   const load = useCallback(async () => {
     const [p, v, s] = await Promise.all([
@@ -38,15 +39,15 @@ export default function Payments() {
   };
 
   return (
-    <Shell title="Payments">
+    <>
       <Msg msg={msg} />
       <form className="card" onSubmit={submit} style={{ marginBottom: 16 }}>
         <h2>Record a payment</h2>
-        <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))' }}>
+        <div className="fields">
           <label>Student · class
             <select required value={f.key} onChange={(e) => setF({ ...f, key: e.target.value })}>
               <option value="">—</option>
-              {fin.map((x) => <option key={x.student_id + x.class_id} value={x.student_id + '|' + x.class_id}>{x.student_id} {names[x.student_id]} · {x.class_id}</option>)}
+              {fin.filter((x) => Number(x.net_fee) > 0).map((x) => <option key={x.student_id + x.class_id} value={x.student_id + '|' + x.class_id}>{x.student_id} {names[x.student_id]} · {x.class_id}</option>)}
             </select></label>
           <label>Amount (LYD)<input type="number" step="0.01" min="0.01" required value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></label>
           <label>Date<input type="date" value={f.paid_on} onChange={(e) => setF({ ...f, paid_on: e.target.value })} /></label>
@@ -66,6 +67,14 @@ export default function Payments() {
             <tr key={p.id}><td>{p.paid_on || '—'}</td><td>{names[p.student_id]}</td><td>{p.class_id}</td>
               <td className="right">{money(p.amount)}</td><td>{p.method}</td><td>{p.receipt_no}</td><td>{p.notes}</td></tr>))}</tbody>
         </table></div></div>
+    </>
+  );
+}
+
+export default function Payments() {
+  return (
+    <Shell title="Payments" subtitle="Student fees received" roles={ROLES}>
+      <Inner />
     </Shell>
   );
 }

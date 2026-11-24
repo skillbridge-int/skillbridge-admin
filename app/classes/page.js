@@ -1,9 +1,13 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import Shell, { Msg } from '../../components/Shell';
+import Shell, { Msg, useAuth } from '../../components/Shell';
 import { supabase, money } from '../../lib/supabase';
 
-export default function Classes() {
+const ROLES = ['admin', 'accountant', 'coordinator'];
+
+function Inner() {
+  const { role } = useAuth();
+  const canEdit = role === 'admin' || role === 'coordinator';
   const [rows, setRows] = useState([]);
   const [teachers, setTeachers] = useState({});
   const [msg, setMsg] = useState(null);
@@ -20,24 +24,33 @@ export default function Classes() {
 
   const setStatus = async (id, status) => {
     const { error } = await supabase.from('classes').update({ status }).eq('id', id);
-    setMsg(error ? { type: 'err', text: error.message } : { type: 'ok', text: `${id} is now ${status}.` });
+    setMsg(error ? { type: 'err', text: error.message } : { type: 'ok', text: status === 'completed' ? `${id} is completed. Its students are now marked completed too.` : `${id} is now ${status}.` });
     load();
   };
 
   return (
-    <Shell title="Classes">
+    <>
       <Msg msg={msg} />
       <div className="card"><div className="scroll"><table>
-        <thead><tr><th>Class</th><th>Teacher</th><th>Held</th><th>Remaining</th><th>Students</th><th className="right">Price / session</th><th>Progress</th><th>Status</th></tr></thead>
+        <thead><tr><th>Class</th><th>Teacher</th><th>Held</th><th>Remaining</th><th>Students</th>{role !== 'coordinator' && <th className="right">Price / session</th>}<th>Progress</th><th>Status</th></tr></thead>
         <tbody>{rows.map((c) => (
           <tr key={c.class_id}>
             <td>{c.class_id}</td><td>{teachers[c.teacher_id]}</td><td>{c.held}/{c.total}</td><td>{c.remaining}</td><td>{c.enrolled}</td>
-            <td className="right">{money(c.price_per_session)}</td>
-            <td><div className="bar"><i style={{ width: `${c.progress_pct}%` }} /></div> {c.progress_pct}%</td>
-            <td><select value={c.status} onChange={(e) => setStatus(c.class_id, e.target.value)}>
-              {['active', 'completed', 'paused', 'cancelled'].map((s) => <option key={s}>{s}</option>)}</select></td>
+            {role !== 'coordinator' && <td className="right">{money(c.price_per_session)}</td>}
+            <td><span className="bar"><i style={{ width: `${c.progress_pct}%` }} /></span> {c.progress_pct}%</td>
+            <td>{canEdit
+              ? <select value={c.status} onChange={(e) => setStatus(c.class_id, e.target.value)}>{['active', 'completed', 'paused', 'cancelled'].map((s) => <option key={s}>{s}</option>)}</select>
+              : <span className={`pill ${c.status}`}>{c.status}</span>}</td>
           </tr>))}</tbody>
       </table></div></div>
+    </>
+  );
+}
+
+export default function Classes() {
+  return (
+    <Shell title="Classes" subtitle="Marking a class completed also completes its students" roles={ROLES}>
+      <Inner />
     </Shell>
   );
 }

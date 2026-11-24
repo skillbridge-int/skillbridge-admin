@@ -1,47 +1,74 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Shell from '../components/Shell';
+import Shell, { Kpi, useAuth } from '../components/Shell';
+import { BarChart, Donut } from '../components/Charts';
 import { supabase, money } from '../lib/supabase';
 
-export default function Dashboard() {
+const ROLES = ['admin', 'accountant'];
+
+function Inner() {
   const [d, setD] = useState(null);
   const [classes, setClasses] = useState([]);
   const [owing, setOwing] = useState([]);
   const [issues, setIssues] = useState([]);
+  const [byClass, setByClass] = useState([]);
+  const [byMonth, setByMonth] = useState([]);
 
   useEffect(() => {
     (async () => {
-      const [a, b, c, s, e] = await Promise.all([
+      const [a, b, c, s, e, f, ss] = await Promise.all([
         supabase.from('v_dashboard').select('*').single(),
         supabase.from('v_class_progress').select('*').order('class_id'),
-        supabase.from('v_enrollment_finance').select('*').gt('balance', 0).order('balance', { ascending: false }),
+        supabase.from('v_enrollment_finance').select('*'),
         supabase.from('students').select('id,name'),
         supabase.from('v_session_issues').select('*'),
+        supabase.from('v_teacher_monthly_due').select('month,gross,teacher_due,skillbridge_share'),
+        supabase.from('sessions').select('session_date,status'),
       ]);
       setD(a.data); setClasses(b.data || []); setIssues(e.data || []);
       const names = Object.fromEntries((s.data || []).map((x) => [x.id, x.name]));
-      setOwing((c.data || []).map((r) => ({ ...r, name: names[r.student_id] })));
+      const fin = c.data || [];
+      setOwing(fin.filter((r) => Number(r.balance) > 0).sort((x, y) => y.balance - x.balance).map((r) => ({ ...r, name: names[r.student_id] })));
+      const g = {};
+      for (const r of fin) { const k = r.class_id; g[k] = g[k] || { label: k.replace('SBI-', '').replace('SBK-', ''), expected: 0, collected: 0 }; g[k].expected += Number(r.net_fee); g[k].collected += Math.min(Number(r.paid), Number(r.net_fee)); }
+      setByClass(Object.values(g));
+      const m = {};
+      for (const r of f.data || []) { const k = String(r.month).slice(0, 7); m[k] = m[k] || { label: k, teachers: 0, center: 0 }; m[k].teachers += Number(r.teacher_due); m[k].center += Number(r.skillbridge_share); }
+      setByMonth(Object.values(m).sort((x, y) => x.label.localeCompare(y.label)));
     })();
   }, []);
 
-  const k = (label, value, cls = '') => (
-    <div className={`card kpi ${cls}`}><small>{label}</small><b>{value}</b></div>
-  );
+  const pct = d && Number(d.expected_revenue) ? Number(d.collected) / Number(d.expected_revenue) : 0;
 
   return (
-    <Shell title="Dashboard">
+    <>
       {d && (
         <div className="grid">
-          {k('Active students', d.active_students)}
-          {k('Active classes', d.active_classes)}
-          {k('Expected revenue (LYD)', money(d.expected_revenue))}
-          {k('Collected (LYD)', money(d.collected), 'ok')}
-          {k('Outstanding (LYD)', money(d.outstanding), 'bad')}
-          {k('Sessions this month', d.sessions_this_month)}
-          {k('Owed to teachers (LYD)', money(d.teachers_balance))}
-          {k('Overdue follow-ups', d.overdue_followups)}
+          <Kpi icon="students" label="Active students" value={d.active_students} />
+          <Kpi icon="classes" label="Active classes" value={d.active_classes} />
+          <Kpi icon="payments" label="Expected revenue (LYD)" value={money(d.expected_revenue)} />
+          <Kpi icon="payments" tone="ok" label="Collected (LYD)" value={money(d.collected)} />
+          <Kpi icon="payments" tone="bad" label="Outstanding (LYD)" value={money(d.outstanding)} />
+          <Kpi icon="sessions" label="Sessions this month" value={d.sessions_this_month} />
+          <Kpi icon="teachers" label="Owed to teachers (LYD)" value={money(d.teachers_balance)} />
+          <Kpi icon="home" label="Overdue follow-ups" value={d.overdue_followups} />
         </div>
       )}
+      <div className="two">
+        <div className="card">
+          <h2>Expected vs collected, by class (LYD)</h2>
+          <BarChart data={byClass} series={[{ key: 'expected', label: 'Expected', color: '#9ec9f2' }, { key: 'collected', label: 'Collected', color: '#0b3367' }]} />
+        </div>
+        <div className="card">
+          <h2>Revenue split by month (LYD)</h2>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div style={{ textAlign: 'center' }}><Donut value={Number(d?.collected || 0)} total={Number(d?.expected_revenue || 0)} label="collected share" /><div className="muted" style={{ fontSize: 12 }}>collected</div></div>
+            <div style={{ flex: 1 }}>
+              <BarChart height={190} data={byMonth} series={[{ key: 'teachers', label: 'Teachers', color: '#1e95e9' }, { key: 'center', label: 'SkillBridge', color: '#0b3367' }]} />
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="two">
         <div className="card">
           <h2>Class progress</h2>
@@ -51,7 +78,7 @@ export default function Dashboard() {
               <tr key={c.class_id}>
                 <td>{c.class_id}</td><td><span className={`pill ${c.status}`}>{c.status}</span></td>
                 <td>{c.held}/{c.total}</td><td>{c.enrolled}</td>
-                <td><div className="bar"><i style={{ width: `${c.progress_pct}%` }} /></div></td>
+                <td><span className="bar"><i style={{ width: `${c.progress_pct}%` }} /></span> {c.progress_pct}%</td>
               </tr>))}</tbody>
           </table></div>
         </div>
@@ -66,7 +93,7 @@ export default function Dashboard() {
         </div>
       </div>
       {issues.length > 0 && (
-        <div className="card" style={{ marginTop: 16 }}>
+        <div className="card">
           <h2>Session log issues ({issues.length})</h2>
           <div className="scroll"><table>
             <thead><tr><th>Class</th><th>No.</th><th>Date</th><th>Issue</th></tr></thead>
@@ -75,6 +102,14 @@ export default function Dashboard() {
           </table></div>
         </div>
       )}
+    </>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Shell title="Dashboard" subtitle="Where the center stands today" roles={ROLES}>
+      <Inner />
     </Shell>
   );
 }
