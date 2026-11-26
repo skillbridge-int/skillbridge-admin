@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
-import Shell, { useAuth } from '../../components/Shell';
+import { useEffect, useState, useCallback } from 'react';
+import Shell, { Msg, useAuth } from '../../components/Shell';
 import { supabase } from '../../lib/supabase';
 import { useClassLabels } from '../../lib/labels';
 
@@ -13,7 +13,8 @@ function Inner() {
   const [cls, setCls] = useState('');
   const [open, setOpen] = useState(null);
 
-  useEffect(() => {
+  const [msg, setMsg] = useState(null);
+  const load = useCallback(() => {
     (async () => {
       const [s, a] = await Promise.all([
         supabase.from('sessions').select('*').order('session_date', { ascending: false }).order('id', { ascending: false }),
@@ -24,12 +25,21 @@ function Inner() {
       setRows((s.data || []).map((r) => ({ ...r, att: by[r.id] })));
     })();
   }, []);
+  useEffect(() => { load(); }, [load]);
+  const del = async (r) => {
+    if (!confirm(`Delete session ${r.session_no} of ${L(r.class_id)} dated ${r.session_date}? Its attendance is deleted too. This cannot be undone.`)) return;
+    const { error } = await supabase.from('sessions').delete().eq('id', r.id);
+    if (error) return setMsg({ type: 'err', text: error.message });
+    setMsg({ type: 'ok', text: 'Session deleted.' }); setOpen(null); load();
+  };
 
   const classes = [...new Set(rows.map((r) => r.class_id))].sort();
   const shown = rows.filter((r) => !cls || r.class_id === cls);
   const held = shown.filter((r) => r.status === 'held');
 
   return (
+    <>
+    <Msg msg={msg} />
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <h2 style={{ margin: 0 }}>{role === 'teacher' ? 'My sessions' : 'All sessions'} · {held.length} held of {shown.length}</h2>
@@ -48,7 +58,9 @@ function Inner() {
             <td style={{ whiteSpace: 'normal', maxWidth: 360 }}>{open === r.id ? [r.topic, r.homework && `Homework: ${r.homework}`, r.notes && `Notes: ${r.notes}`].filter(Boolean).join(' — ') || '—' : (r.topic || '')}</td>
           </tr>))}</tbody>
       </table></div>
+      {role === 'admin' && open && (() => { const r = rows.find((x) => x.id === open); return r ? <p style={{ marginTop: 12 }}><button className="small danger" onClick={() => del(r)}>Delete this session ({r.session_date}, no. {r.session_no})</button></p> : null; })()}
     </div>
+    </>
   );
 }
 

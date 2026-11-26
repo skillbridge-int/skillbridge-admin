@@ -105,11 +105,14 @@ button.danger{background:var(--bad);box-shadow:none}
 .logincard h1{margin:0;text-align:center;font-size:22px}.logincard p{text-align:center;margin:4px 0 20px}
 
 @media(max-width:860px){
-  .layout{grid-template-columns:1fr}
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .side,.main{min-width:0}
+  .scroll{max-width:100%}
   .side{position:static;height:auto;flex-direction:column;gap:12px;padding:12px}
   nav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
   nav a{white-space:nowrap}
-  .who{display:none}
+  .who{flex-wrap:nowrap;padding:8px 10px}
+  .who .ghost{width:auto;margin-left:auto;padding:7px 14px;white-space:nowrap}
   .main{padding:16px 14px 40px}
   .two{grid-template-columns:1fr}
 }
@@ -117,3 +120,4 @@ button.danger{background:var(--bad);box-shadow:none}
 .cmt{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:14px}
 .cmt b{font-size:13px}
 .codebox{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;letter-spacing:.08em;background:var(--bg);border:1px dashed var(--line);border-radius:8px;padding:3px 9px}
+.ver{color:#7fa6d6;font-size:11px;text-align:center}

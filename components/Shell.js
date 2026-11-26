@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { supabase, BASE, ROLE_LABEL } from '../lib/supabase';
+import { supabase, BASE, ROLE_LABEL, VERSION } from '../lib/supabase';
 
 const Ctx = createContext(null);
 export const useAuth = () => useContext(Ctx);
@@ -18,6 +18,7 @@ const ICONS = {
   log: 'M12 5v14M5 12h14',
   sessions: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   home: 'M3 11l9-8 9 8M5 10v10h14V10',
+  logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
   posts: 'M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12',
   family: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 12a2.5 2.5 0 1 0 0-5M3 20v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1M17 14a4 4 0 0 1 4 4v2',
 };
@@ -28,8 +29,8 @@ export const Icon = ({ name, size = 20 }) => (
 );
 
 const NAV = {
-  admin: [['/', 'Dashboard', 'dashboard'], ['/students', 'Students', 'students'], ['/classes', 'Classes', 'classes'], ['/sessions', 'Sessions', 'sessions'], ['/log', 'Log a session', 'log'], ['/posts', 'Tasks & news', 'posts'], ['/families', 'Family access', 'family'], ['/payments', 'Payments', 'payments'], ['/teachers', 'Teacher pay', 'teachers'], ['/settings', 'Settings', 'settings']],
-  accountant: [['/', 'Dashboard', 'dashboard'], ['/students', 'Students', 'students'], ['/payments', 'Payments', 'payments'], ['/teachers', 'Teacher pay', 'teachers']],
+  admin: [['/', 'Dashboard', 'dashboard'], ['/students', 'Students', 'students'], ['/classes', 'Classes', 'classes'], ['/sessions', 'Sessions', 'sessions'], ['/log', 'Log a session', 'log'], ['/posts', 'Tasks & news', 'posts'], ['/families', 'Family access', 'family'], ['/payments', 'Payments', 'payments'], ['/orders', 'Website orders', 'payments'], ['/catalog', 'Website catalog', 'classes'], ['/teachers', 'Teacher pay', 'teachers'], ['/settings', 'Settings', 'settings']],
+  accountant: [['/', 'Dashboard', 'dashboard'], ['/students', 'Students', 'students'], ['/payments', 'Payments', 'payments'], ['/orders', 'Website orders', 'payments'], ['/teachers', 'Teacher pay', 'teachers']],
   coordinator: [['/students', 'Students', 'students'], ['/classes', 'Classes', 'classes'], ['/sessions', 'Sessions', 'sessions'], ['/log', 'Log a session', 'log'], ['/posts', 'Tasks & news', 'posts'], ['/families', 'Family access', 'family']],
   teacher: [['/teacher', 'My overview', 'home'], ['/log', 'Log a session', 'log'], ['/posts', 'Tasks & news', 'posts'], ['/sessions', 'My sessions', 'sessions']],
   parent: [['/parent', 'My learning', 'home']],
@@ -83,6 +84,7 @@ export default function Shell({ title, subtitle, roles, children }) {
             <div className="whoText"><b>{auth.name}</b><small>{ROLE_LABEL[auth.role] || auth.role}</small></div>
             <button className="ghost small" onClick={out} title="Sign out">Sign out</button>
           </div>
+          <small className="ver">v{VERSION}</small>
         </aside>
         <main className="main">
           <header className="pagehead">

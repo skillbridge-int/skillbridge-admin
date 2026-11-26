@@ -4,6 +4,7 @@ const BASE = process.env.NEXT_PUBLIC_BASE || '';
 export const metadata = {
   title: 'SkillBridge International',
   description: 'SkillBridge International management system',
+  manifest: `${BASE}/manifest.webmanifest`,
   icons: { icon: `${BASE}/favicon.png`, apple: `${BASE}/logo.png` },
 };
 export const viewport = { width: 'device-width', initialScale: 1, themeColor: '#0b3367' };
