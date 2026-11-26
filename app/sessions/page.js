@@ -55,10 +55,9 @@ function Inner() {
             <td><span className={`pill ${r.status}`}>{r.status.replaceAll('_', ' ')}</span></td>
             <td>{r.kind}</td><td>{r.duration_min || ''}</td>
             <td>{r.att ? `${r.att.present} present · ${r.att.absent} absent${r.att.excused ? ` · ${r.att.excused} excused` : ''}` : ''}</td>
-            <td style={{ whiteSpace: 'normal', maxWidth: 360 }}>{open === r.id ? [r.topic, r.homework && `Homework: ${r.homework}`, r.notes && `Notes: ${r.notes}`].filter(Boolean).join(' — ') || '—' : (r.topic || '')}</td>
+            <td style={{ whiteSpace: 'normal', maxWidth: 360 }}>{open === r.id ? <>{[r.topic, r.homework && `Homework: ${r.homework}`, r.notes && `Notes: ${r.notes}`].filter(Boolean).join(' — ') || '—'}{role === 'admin' && <div style={{ marginTop: 8 }}><button type="button" className="small danger" onClick={(e) => { e.stopPropagation(); del(r); }}>Delete this session</button></div>}</> : (r.topic || '')}</td>
           </tr>))}</tbody>
       </table></div>
-      {role === 'admin' && open && (() => { const r = rows.find((x) => x.id === open); return r ? <p style={{ marginTop: 12 }}><button className="small danger" onClick={() => del(r)}>Delete this session ({r.session_date}, no. {r.session_no})</button></p> : null; })()}
     </div>
     </>
   );
